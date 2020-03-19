@@ -56,7 +56,7 @@ To do so we but a breakpoint just before the call to the function call and we pr
 To do so we put a breakpoint in the function **func** just after the call to **strcpy**.
 then we print the stack (**x/40wx $esp**) and search for the value we've found at step 1 for ebp and eip.
 you can see the result on the following picture (the value might be different for you).
-[found ebp value](img/find_ebp.png)
+![found ebp value](img/find_ebp.png)
 3. Calculate the size before touching ebp/eip
 Now we have to calculate how much bytes we have before touching ebp/eip. In this case we have 72 bytes before touching ebp and then 76 before touching eip.
 4. Calculate number of NOP instruction
@@ -67,7 +67,7 @@ We can thus calculate the number of NOP instruction(**\x90**) 76-55=21
 4. Rewrite eip with our adress in the NOP instruction. Personally i used **0xbffff218** but any address inside the NOP can be used.
 5. Run gdb with this handcraft argument
 you can see how to run the code in gdb with this argument on the following picture
-[command](img/command_2_run.png)
+![command](img/command_2_run.png)
 6. you made it
 congratulation you've spawned a shell
-[result](img/result.png)    
+![result](img/result.png)    
