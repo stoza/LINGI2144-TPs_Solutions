@@ -17,7 +17,7 @@ We can do 3 differents things:
 ## 4.3
 Here we have the same code as 4.2 but with a stack protector. So if we try a password longer than 16 we get a "stack smashed detected aborted"
 If we compare the 2 different code in gdb and more specially the **check_authentification** we can see the difference between the 2 code. 
-[difference between 4.2 and 4.3](img/diff_43-42.png)
+![difference between 4.2 and 4.3](img/diff_43-42.png)
 
 We can see on the picture above, that the right code (which is the one with the protection) is bigger than the left code. 
 Then we notice on the right code at address **0X000011e1** that we put something on eax. This something is a random value generated from a gs register.
@@ -44,7 +44,7 @@ all it's clearly explain in the slide.
 ## 4.6
 Do know exactly what to search
 
-##4.7
+## 4.7
 Nothing to explain all is in the instruction.
 
 ## 4.8
