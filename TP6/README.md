@@ -1,4 +1,22 @@
 # Solutions TP6
+> Author(s): Guillaume Everarts de Velp  
+> Last update: 23-03-2020
+
+**Progress**
+ - [x] [6.1 Environment Configuration](https://github.com/geverartsdev/LINGI2144-TPs_Solutions/tree/master/TP6#61-environment-configuration)
+ - [x] [6.2 Evading Stack Protection](https://github.com/geverartsdev/LINGI2144-TPs_Solutions/tree/master/TP6#62-evading-stack-protection)
+ - [ ] [6.3 Breaking ASLR](https://github.com/geverartsdev/LINGI2144-TPs_Solutions/tree/master/TP6#63-breaking-aslr)
+
+## 6.1 Environment Configuration
+> This is the same at last week, but repeated so you don't forget.
+> 
+> On most Linux systems and with most compilers there are protections built in to prevent various exploits. For today's tutorial > we may have to turn some of these off (and back on again later).
+> 
+> One is the randomisation of memory segments by the Linux kernel. We can see the current value with `sudo cat /proc/sys/kernel/randomize_va_space`
+> This is "2" by default on Kali Linux (and most Linux systems). To turn this off for the rest of the sessions by setting the value to "0" we can run `echo 0 | sudo tee /proc/sys/kernel/randomize_va_space`
+> Afterwards, confirm we have turned off memory segment randomisation with `sudo cat /proc/sys/kernel/randomize_va_space`
+> 
+> Note that this will be changed later in the tutorial at different times.
 
 ## 6.2 Evading Stack Protection
 > In "vuln.c" is a program that has a vulnerability even when compiled with stack protection. This file can be built with: `gcc -z execstack -o vuln vuln.c`, optionally you can also include debugging information with "-g".
@@ -179,3 +197,17 @@ $
 [Inferior 1 (process 1581) exited normally]
 ```
 This might not work for you as addresses might have changed.
+
+## 6.3 Breaking ASLR
+> For this section of the tutorial we will tunr address randomisation back on: `echo 2 | sudo tee /proc/sys/kernel/randomize_va_space` and we can confirm it is on with `sudo cat /proc/sys/kernel/randomize_va_space` and observing the value "2".
+> 
+> In "ret2text.c" you will find a program that that should be exploitable even with stack protection. You can build the program with:  `gcc -o ret2text ret2text.c`and include debugging if you want.
+> 
+> You should now be able to cause an overflow that allows you to jump into the secret function.
+> 
+> HINT: This was used as an example in the lecture with brief discussion of how to perform the exploit.
+> 
+> In "vulnerable.c" you will find a program that we injected shell code into when ASLR was disabled. Can you inject a shellcode into it with ASLR enable?
+> 
+> HINT: Some solutions were presented in the lectures, or feel free to instrument the code and learn about the behaviour on your system before exploiting it.
+
