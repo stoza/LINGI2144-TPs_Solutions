@@ -67,13 +67,15 @@ $ (gdb) x/4xw 0x402058
 We found the address (`0x00402058`) of the string to overwrite!
 
 **3. Overwriting execl argument**
-This is where I'm stuck, of of the caracters that we would need to pass in argument of the function is `\x20`, which correspond to the space character...  In theory we would need to simply do this:
+This is where I'm stuck, the address we make our second *strncpy* write to isn't writable, so we get a SIGSEGV.  In theory we would need to simply do this:
 ```console
-$ (gdb) run `perl -e 'print "\x90"x30 . "\x58\x20\x40"'` /bin/sh
-Starting program: /home/admin/SecurityClass/Tutorial-06/6.2/vuln `perl -e 'print "\x90"x30 . "\x58\x20\x40"'` /bin/sh
+$ (gdb) run "`perl -e 'print "\x90"x30 . "\x58\x20\x40"'`" /bin/sh
+Starting program: /home/admin/SecurityClass/Tutorial-06/6.2/vuln "`perl -e 'print "\x90"x30 . "\x58\x20\x40"'`" /bin/sh
 p=bffff28e       -- before 1st strcpy
-p=bfff0058       -- after 1st  strcpy
+p=402058         -- after 1st  strcpy
+
+Program received signal SIGSEGV, Segmentation fault.
 ```
-But we can see that the first argument passed to the function will be cut after the space character...
+
 
 ### Final solution :running:
