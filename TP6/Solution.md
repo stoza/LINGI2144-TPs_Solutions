@@ -16,6 +16,6 @@ You can break after the **strncpy** and see that the value of eip was rewritten 
 ![rewitten eip](img/rewritten.png)
 3. with the second **strncpy** we can write any address we want in **saved eip** so that we can return to our shellcode for example. So now the second argument has to be address of the shellcode or with wathever address you want.
 
-> :warning: for now that's only the concept of the attack because the length of the buffer a (30 bytes) is too small to contain the shellcode (55 bytes) given in the previous TP 
+> :warning: for now that's only the concept of the attack because the length of the buffer a (30 bytes) is too small to contain the shellcode (55 bytes) given in the previous TP. So,for now  i don't know to launch a shellcode 
 
  
