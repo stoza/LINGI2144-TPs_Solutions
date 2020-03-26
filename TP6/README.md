@@ -3,9 +3,9 @@
 > Last update: 23-03-2020
 
 **Progress**
- - [x] [6.1 Environment Configuration](https://github.com/geverartsdev/LINGI2144-TPs_Solutions/tree/master/TP6#61-environment-configuration)
- - [x] [6.2 Evading Stack Protection](https://github.com/geverartsdev/LINGI2144-TPs_Solutions/tree/master/TP6#62-evading-stack-protection)
- - [ ] [6.3 Breaking ASLR](https://github.com/geverartsdev/LINGI2144-TPs_Solutions/tree/master/TP6#63-breaking-aslr)
+ - [x] [6.1 Environment Configuration](#61-environment-configuration)
+ - [x] [6.2 Evading Stack Protection](#62-evading-stack-protection)
+ - [ ] [6.3 Breaking ASLR](#63-breaking-aslr)
 
 ## 6.1 Environment Configuration
 > This is the same at last week, but repeated so you don't forget.
