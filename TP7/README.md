@@ -4,7 +4,7 @@
 
 **Progress**
  - [x] [7.1 Environment Configuration](#71-environment-configuration)
- - [ ] [7.2 Evading Stack Protection](#71-format-string)
+ - [ ] [7.2 Evading Stack Protection](#72-format-string)
 
 ## 7.1 Environment Configuration
 > This is the same at last week, but repeated so you don't forget.
@@ -31,6 +31,7 @@
 > HINT: The format string component "%n" writes back from format string into an address. You can use this to change the value of one of the "arguments" to the function using your format string.
 
 ### Idea :bulb:
+The main idea will be to use `%n` as an argument passed to a vulnerable *printf* to write a value in memory.  To do so, we can pass at the beginning of the string the address we are willing to write on, then insert as many "parameter sollicitation" as we need to reach the begin of the string in memory (with `%x` for example), and finally add `%n`, which will count the number of characters printed until now and write it in the address given by then next argument on the stack, which would be in our case the address at the beginning of the string.
 
 ### Step by step :walking:
 
