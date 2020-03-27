@@ -40,7 +40,8 @@ So we are able on the last caracter to rewrite the value of i and then to start 
 we can also find this by lookting at the assembly:
 0x004011a0: jmp to func+50. After that, the compiler is comparing a value of i with 16 and then jump back to 0x00401199 <+16>: movl $0x0,-0x4(%ebp)
 
-Here is the asssembly: __:
+Here is the asssembly: :
+```
  0x00401189 <+0>: push %ebp
  0x0040118a <+1>: mov %esp,%ebp
  0x0040118c <+3>: sub $0x20,%esp
@@ -63,7 +64,7 @@ Here is the asssembly: __:
  0x004011c2 <+57>: nop
  0x004011c3 <+58>: leave
  0x004011c4 <+59>: ret 
-
+```
 0x4(%ebp)is where the value of i is stored. If we put a 16 char's input, the last iteration of the for loop will overwrite
 i's value with the null character (all bits of this char are set to 0), which is the next value on the stack. (if we look at the
 code, i is declared just before the buffer).
@@ -99,13 +100,15 @@ then , to know the buffer size ( we can simply check in the code but , that's an
 the first x for "examine", 24 for the quantity of data, second x means hexadecimal and w means words. so we want
 to examine the 24 words at the position of the newbuffer in memory (on the stack).
 
-We get __:
+We get : 
+```
  0xbffff2b0: 0x90909090 0x90909090 0x90909090 0x90909090
  0xbffff2c0: 0x90909090 0x90909090 0x90909090 0x90909090
  0xbffff2d0: 0x00405100 0x00404000 0xbffff308 0x0040122e
  0xbffff2e0: 0x00405160 0xffffff90 0x00000020 0x004011fb
  0xbffff2f0: 0x00000002 0xbffff3b4 0xbffff3c0 0x00405160
  0xbffff300: 0xbffff320 0x00000000 0x00000000 0xb7dff7e1
+```
  
  x90 is a NOP instruction, 0xbffff308 seems to be the ebp value and 0x0040122e is the eip value that we want to
 overwrite.In order to know the size of the buffer, we simply subtract 0xbffff2d0 - 0xbffff2b0 and we get 32 (in
@@ -146,6 +149,7 @@ moving the least significant byte of what follows it immediately in the memory (
 buffer.
 
 Here is the stack representation :
+```
  ------------------------> esp
  | int i                |
  |-------------------- -|
@@ -160,6 +164,7 @@ Here is the stack representation :
  |     STACK            |
  |                      |
  ────────────────────────
+```
  
  if we write enough " A" char on the buffer (256), we would be able to reach the saved EBP with the null char
 (because 257 iterations of "copy" are done). If EBP is altered, the ret instruction at the end of func will load the eip
