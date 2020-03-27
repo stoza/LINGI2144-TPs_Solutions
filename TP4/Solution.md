@@ -146,7 +146,7 @@ moving the least significant byte of what follows it immediately in the memory (
 buffer.
 
 Here is the stack representation :
- ________________________ -> esp
+ ------------------------> esp
  | int i                |
  |-------------------- -|
  | buffer[256]          |
