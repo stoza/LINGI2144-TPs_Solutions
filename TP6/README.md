@@ -1,5 +1,5 @@
 # Solutions TP6
-> Author(s): Guillaume Everarts de Velp, Nicolas Rybowski 
+> Author(s): Guillaume Everarts de Velp, Nicolas Rybowski  
 > Last update: 28-03-2020
 
 **Progress**
